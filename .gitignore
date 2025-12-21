@@ -1,0 +1,88 @@
+# Visual Studio
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio temporary files (重要！这就是解决你错误的关键)
+.vs/
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# NuGet Packages
+packages/
+!packages/repositories.config
+*.nupkg
+*.nuspec
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Other
+*.cache
+*.log
+*.tmp
+
+# Additional Visual Studio files
+*.VC.db
+*.VC.VC.opendb
+*.opendb
+
+# Test results
+TestResults/
+*.testsettings
+*.VisualState.xml
+
+# Code coverage results
+*.coverage
+*.coveragexml
+
+# Click-Once manifests
+publish/
+
+# SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+# Backup & temp files
+*~
+*.bak
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Certificate files
+*.cer
+*.pfx
+*.p12
+
+# User-specific files
+*.pubxml
+*.publishproj
+
+# Azure
+*.azurePubxml
+*.azureSecret
+
+# IIS
+*.user.pubxml
