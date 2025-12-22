@@ -68,6 +68,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Database\FactoryDbContext.cs" />
     <Compile Include="Models\AlarmModel.cs" />
     <Compile Include="Models\DeviceModel.cs" />
     <Compile Include="Models\EnvironmentModel.cs" />

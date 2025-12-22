@@ -1,4 +1,5 @@
 ﻿using Modbus.Device;
+using ProductMonitor.Database;
 using ProductMonitor.Models;
 using ProductMonitor.Services;
 using ProductMonitor.UserControls;
@@ -21,7 +22,13 @@ namespace ProductMonitor.ViewModels
         public ObservableCollection<EnvironmentModel> EnvironmentColl { get; set; }
         public ObservableCollection<DeviceModel> DeviceColl { get; set; }
 
+        public ObservableCollection<AlarmModel> AlarmList { get; set; }
+
         private CancellationTokenSource _modbusCts;
+
+        // 添加计数器（类字段）
+        private int _snapshotCounter = 0;
+        private const int SNAPSHOT_INTERVAL = 10; // 每10秒存一次
 
         public MainWindowVM()
         {
@@ -41,11 +48,7 @@ namespace ProductMonitor.ViewModels
             #endregion
 
             #region 初始化报警列表
-            AlarmList = new List<AlarmModel>();
-            AlarmList.Add(new AlarmModel { Num = "01", Msg = "设备温度过高", Time = "2025-09-21 18:34:56", Duration = 7 });
-            AlarmList.Add(new AlarmModel { Num = "02", Msg = "车间温度过高", Time = "2025-09-21 20:40:55", Duration = 10 });
-            AlarmList.Add(new AlarmModel { Num = "03", Msg = "设备转速过快", Time = "2025-09-21 12:24:34", Duration = 12 });
-            AlarmList.Add(new AlarmModel { Num = "04", Msg = "设备气压偏低", Time = "2025-09-21 17:34:56", Duration = 90 });
+            AlarmList = new ObservableCollection<AlarmModel>();
             #endregion
 
 
@@ -125,24 +128,153 @@ namespace ProductMonitor.ViewModels
             #endregion
 
         }
-        //处理环境数据更新
+
+        #region 处理环境数据
         private void HandleEnvironmentData(List<int> values)
         {
+            //1、更新界面
             for (int i = 0; i < values.Count && i < EnvironmentColl.Count; i++)
             {
                 EnvironmentColl[i].EnItemValue = values[i];
             }
-        }
+            // 2. 报警检查（按 index 对应）
+            if (values.Count > 2) // 温度
+            {
+                int temp = values[2];
+                if (temp > 30)
+                {
+                    TriggerAlarm(
+                        alarmType: "温度过高",
+                        actualValue: $"{temp}℃",
+                        triggerTime: DateTime.Now,
+                        duration: 10,
+                        fullMessage: $"温度过高 ({temp}℃ > 30℃)"
+                    );
+                }
+            }
 
-        // 处理设备数据更新
+            if (values.Count > 4) // PM2.5
+            {
+                int pm25 = values[4];
+                if (pm25 > 95)
+                {
+                    TriggerAlarm(
+                        alarmType: "PM2.5超标",
+                        actualValue: $"{pm25}",
+                        triggerTime: DateTime.Now,
+                        duration: 10,
+                        fullMessage: $"PM2.5超标 ({pm25} > 95)"
+                    );
+                }
+            }
+
+        }
+        #endregion
+
+
+        #region 处理设备数据更新
         private void HandleDeviceData(List<int> values)
         {
+            //1、更新界面
             for (int i = 0; i < values.Count && i < DeviceColl.Count; i++)
             {
                 DeviceColl[i].Value = values[i];
             }
+
+            // 2. 检查设备报警
+            if (values.Count > 1) // 电压 (V)
+            {
+                int voltage = values[1];
+                if (voltage > 240)
+                {
+                    TriggerAlarm(
+                        alarmType: "电压过高",
+                        actualValue: $"{voltage}V",
+                        triggerTime: DateTime.Now,
+                        duration: 10,
+                        fullMessage: $"电压过高 ({voltage}V > 240V)"
+                    );
+                }
+                else if (voltage < 200)
+                {
+                    TriggerAlarm(
+                        alarmType: "电压过低",
+                        actualValue: $"{voltage}V",
+                        triggerTime: DateTime.Now,
+                        duration: 10,
+                        fullMessage: $"电压过低 ({voltage}V < 200V)"
+                    );
+                }
+            }
+
+            if (values.Count > 2) // 转速 (r/min)
+            {
+                int speed = values[2];
+                if (speed > 1100)
+                {
+                    TriggerAlarm(
+                        alarmType: "转速过快",
+                        actualValue: $"{speed}r/min",
+                        triggerTime: DateTime.Now,
+                        duration: 10,
+                        fullMessage: $"转速过快 ({speed}r/min > 1100r/min)"
+                    );
+                }
+            }
+
+            if (++_snapshotCounter >= SNAPSHOT_INTERVAL)
+            {
+                _snapshotCounter = 0;
+                if (values.Count >= 7)
+                {
+                    FactoryDbContext.SaveDeviceSnapshot(
+                        values[0], // 总电能
+                        values[1], // 电压
+                        values[2], // 转速
+                        values[3], // 气压
+                        values[4], // 流量
+                        values[5], // 频率
+                        values[6]  // 功率
+                    );
+                }
+            }
+
+
         }
-      
+        #endregion
+
+        // 
+
+
+        //报警处理
+        /// <summary>
+        /// 触发报警（UI 显示简化版，数据库存储完整版）
+        /// </summary>
+        private void TriggerAlarm(
+            string alarmType,
+            string actualValue,
+            DateTime triggerTime,
+            int duration,
+            string fullMessage = null)
+        {
+            string uiMsg = $"{alarmType} ({actualValue})";
+            string dbMsg = fullMessage ?? uiMsg;
+
+            string num = (AlarmList.Count + 1).ToString("D2");
+            string timeStr = triggerTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+            // 插入到顶部（最新在最前）
+            AlarmList.Insert(0, new AlarmModel
+            {
+                Num = num,
+                Msg = uiMsg,
+                Time = timeStr,
+                Duration = duration
+            });
+
+            // 保存完整日志到数据库
+            FactoryDbContext.SaveAlarm(dbMsg, triggerTime, duration);
+        }
         /// <summary>
         /// 监控用户控件
         /// </summary>
@@ -268,24 +400,7 @@ namespace ProductMonitor.ViewModels
 
        
 
-        #region 报警属性
-        private List<AlarmModel> _AlarmList;
-
-        public List<AlarmModel> AlarmList
-        {
-            get { return _AlarmList; }
-            set { 
-                
-                _AlarmList = value;
-                if (PropertyChanged != null)
-                {
-                    PropertyChanged(this, new PropertyChangedEventArgs("AlarmList"));
-                }
-
-            }
-        }
-
-        #endregion
+   
 
      
 

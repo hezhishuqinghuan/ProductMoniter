@@ -269,26 +269,29 @@
                     </StackPanel>
                     
                     <!-- 报警列表-->
-                    <ItemsControl Grid.Row="1" ItemsSource="{Binding AlarmList}" Margin="5,0">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Height="23">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="20"></ColumnDefinition>
-                                        <ColumnDefinition Width="30"></ColumnDefinition>
-                                        <ColumnDefinition Width="150"></ColumnDefinition>
-                                        <ColumnDefinition></ColumnDefinition>
-                                        <ColumnDefinition></ColumnDefinition>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Background="IndianRed" Height="6" Width="6" CornerRadius="3" VerticalAlignment="Center" HorizontalAlignment="Center"></Border>
-                                    <TextBlock Text="{Binding Num}" Grid.Column="1"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#992bedf1"></TextBlock>
-                                    <TextBlock Text="{Binding Msg}" Grid.Column="2"  VerticalAlignment="Center"  Foreground="#992bedf1"></TextBlock>
-                                    <TextBlock Text="{Binding Time}" Grid.Column="3"  VerticalAlignment="Center"  Foreground="#992bedf1"></TextBlock>
-                                    <TextBlock Text="{Binding Duration,StringFormat=时长{0}秒}" Grid.Column="4"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#992bedf1"></TextBlock>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden"  Margin="5,0" >
+                        <ItemsControl  ItemsSource="{Binding AlarmList}" >
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Height="23">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20"></ColumnDefinition>
+                                            <ColumnDefinition Width="30"></ColumnDefinition>
+                                            <ColumnDefinition Width="120"></ColumnDefinition>
+                                            <ColumnDefinition MinWidth="120" Width="*"></ColumnDefinition>
+                                            <ColumnDefinition></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Background="IndianRed" Height="6" Width="6" CornerRadius="3" VerticalAlignment="Center" HorizontalAlignment="Center"></Border>
+                                        <TextBlock Text="{Binding Num}" Grid.Column="1"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#992bedf1"></TextBlock>
+                                        <TextBlock Text="{Binding Msg}" Grid.Column="2"  VerticalAlignment="Center"  Foreground="#992bedf1"></TextBlock>
+                                        <TextBlock Text="{Binding Time}" Grid.Column="3"  VerticalAlignment="Center"  Foreground="#992bedf1"></TextBlock>
+                                        <TextBlock Text="{Binding Duration,StringFormat=时长{0}秒}" Grid.Column="4"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#992bedf1"></TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                   
                 </Grid>
                 
                 <!--第三行-->
