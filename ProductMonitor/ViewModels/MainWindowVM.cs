@@ -1,5 +1,6 @@
 ﻿using Modbus.Device;
 using ProductMonitor.Models;
+using ProductMonitor.Services;
 using ProductMonitor.UserControls;
 using System;
 using System.Collections.Generic;
@@ -17,42 +18,26 @@ namespace ProductMonitor.ViewModels
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public ObservableCollection<EnvironmentModel> EnvironmentColl { get; set; }
+        public ObservableCollection<DeviceModel> DeviceColl { get; set; }
+
+        private CancellationTokenSource _modbusCts;
+
         public MainWindowVM()
         {
+           
 
             #region 初始化环境监控数据
-            EnvironmentColl = new ObservableCollection<EnvironmentModel>();
-            EnvironmentColl.Add(new EnvironmentModel { EnItemName = "光照(Lux)", EnItemValue = 123 });
-            EnvironmentColl.Add(new EnvironmentModel { EnItemName = "噪音(db)", EnItemValue = 55 });
-            EnvironmentColl.Add(new EnvironmentModel { EnItemName = "温度(℃)", EnItemValue = 80 });
-            EnvironmentColl.Add(new EnvironmentModel { EnItemName = "湿度(%)", EnItemValue = 43 });
-            EnvironmentColl.Add(new EnvironmentModel { EnItemName = "PM2.5(m³)", EnItemValue = 20 });
-            EnvironmentColl.Add(new EnvironmentModel { EnItemName = "硫化氢(PPM)", EnItemValue = 15 });
-            EnvironmentColl.Add(new EnvironmentModel { EnItemName = "氮气(PPM)", EnItemValue = 18 });
-
-            //从设备读取数据（异步）
-            Task.Run(async () =>
-            {
-                while (true)
-                {
-                    using (SerialPort serialPort = new SerialPort("COM1", 9600, Parity.None, 8, StopBits.One))
-                    {
-                        serialPort.Open();
-                        Modbus.Device.IModbusMaster master = Modbus.Device.ModbusSerialMaster.CreateRtu(serialPort);
-
-                        ushort[] values = master.ReadHoldingRegisters(1, 0, 7);//从设备地址，寄存器起始地址，寄存器个数
-                                                                               //功能码03
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            for (int i = 0; i < 7; i++)
-                            {
-                                EnvironmentColl[i].EnItemValue = values[i];
-                            }
-                        });
-                        await Task.Delay(1000);
-                    }
-                }
-            });
+            EnvironmentColl = new ObservableCollection<EnvironmentModel>
+    {
+        new EnvironmentModel { EnItemName = "光照(Lux)", EnItemValue = 0 },
+        new EnvironmentModel { EnItemName = "噪音(db)", EnItemValue = 0 },
+        new EnvironmentModel { EnItemName = "温度(℃)", EnItemValue = 0 },
+        new EnvironmentModel { EnItemName = "湿度(%)", EnItemValue = 0 },
+        new EnvironmentModel { EnItemName = "PM2.5(m³)", EnItemValue = 0 },
+        new EnvironmentModel { EnItemName = "硫化氢(PPM)", EnItemValue = 0 },
+        new EnvironmentModel { EnItemName = "氮气(PPM)", EnItemValue = 0 }
+    };
             #endregion
 
             #region 初始化报警列表
@@ -63,21 +48,23 @@ namespace ProductMonitor.ViewModels
             AlarmList.Add(new AlarmModel { Num = "04", Msg = "设备气压偏低", Time = "2025-09-21 17:34:56", Duration = 90 });
             #endregion
 
-         
+
 
             #region 初始化设备监控
-            DeviceList = new List<DeviceModel>();
-            DeviceList.Add(new DeviceModel { DeviceItem = "电能(Kw.h)", Value = 60.8 });
-            DeviceList.Add(new DeviceModel { DeviceItem = "电压(V)", Value = 390 });
-            DeviceList.Add(new DeviceModel { DeviceItem = "电流(A)", Value = 5 });
-            DeviceList.Add(new DeviceModel { DeviceItem = "压差(kpa)", Value = 13 });
-            DeviceList.Add(new DeviceModel { DeviceItem = "温度(℃)", Value = 36 });
-            DeviceList.Add(new DeviceModel { DeviceItem = "振动(mm/s)", Value = 4.1 });
-            DeviceList.Add(new DeviceModel { DeviceItem = "转速(r/mm)", Value = 2600 });
-            DeviceList.Add(new DeviceModel { DeviceItem = "气压(kpa)", Value = 0.5 });
-
+            DeviceColl = new ObservableCollection<DeviceModel>
+    {
+        new DeviceModel { DeviceItem = "总电能(KW)", Value = 0 },
+        new DeviceModel { DeviceItem = "电压(V)", Value = 0 },
+        new DeviceModel { DeviceItem = "转速(r/min)", Value = 0 },
+        new DeviceModel { DeviceItem = "气压(MPa)", Value = 0 },
+        new DeviceModel { DeviceItem = "流量(m³/h)", Value = 0 },
+        new DeviceModel { DeviceItem = "频率(Hz)", Value = 0 },
+        new DeviceModel { DeviceItem = "功率(W)", Value = 0 }
+    };
 
             #endregion
+
+          
 
             #region 初始化雷达数据
             RaderList = new List<RaderModel>();
@@ -127,12 +114,35 @@ namespace ProductMonitor.ViewModels
 
             #endregion
 
+            #region 启动Modbus服务并订阅事件
+            _modbusCts = new CancellationTokenSource();
+            var modbusService = new ModbusDataService();
+
+            modbusService.OnEnvironmentDataUpdated += HandleEnvironmentData;
+            modbusService.OnDeviceDataUpdated += HandleDeviceData;
+
+            Task.Run(() => modbusService.StartReadingAsync(_modbusCts.Token));
+            #endregion
+
+        }
+        //处理环境数据更新
+        private void HandleEnvironmentData(List<int> values)
+        {
+            for (int i = 0; i < values.Count && i < EnvironmentColl.Count; i++)
+            {
+                EnvironmentColl[i].EnItemValue = values[i];
+            }
         }
 
-
-
-
-
+        // 处理设备数据更新
+        private void HandleDeviceData(List<int> values)
+        {
+            for (int i = 0; i < values.Count && i < DeviceColl.Count; i++)
+            {
+                DeviceColl[i].Value = values[i];
+            }
+        }
+      
         /// <summary>
         /// 监控用户控件
         /// </summary>
@@ -256,28 +266,7 @@ namespace ProductMonitor.ViewModels
         }
         #endregion
 
-        #region 环境监控数据
-        /// <summary>
-        /// 环境监控数据
-        /// </summary>
-        private ObservableCollection<EnvironmentModel>  _EnvironmentColl;
-
-        public ObservableCollection<EnvironmentModel>  EnvironmentColl
-        {
-            get { return _EnvironmentColl; }
-            set { 
-                _EnvironmentColl = value;
-                if(PropertyChanged != null)
-                {
-                    PropertyChanged(this, new PropertyChangedEventArgs("EnvironmentColl"));
-                }
-            }
-        }
-
        
-
-
-        #endregion
 
         #region 报警属性
         private List<AlarmModel> _AlarmList;
@@ -300,24 +289,7 @@ namespace ProductMonitor.ViewModels
 
      
 
-        #region 设备集合
-
-        private List<DeviceModel> _DeviceList;
-
-        public List<DeviceModel> DeviceList
-        {
-            get { return _DeviceList; }
-            set { 
-                
-                _DeviceList = value;
-                if (PropertyChanged != null)
-                {
-                    PropertyChanged(this, new PropertyChangedEventArgs("DeviceList"));
-                }
-
-            }
-        }
-        #endregion
+       
 
         #region 雷达数据属性
 

@@ -86,3 +86,5 @@ publish/
 
 # IIS
 *.user.pubxml
+
+*.mbs

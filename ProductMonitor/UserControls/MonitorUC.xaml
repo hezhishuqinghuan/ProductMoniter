@@ -326,7 +326,7 @@
             <!--第三列-->
             <UniformGrid Grid.Column="2" Columns="1">
                 <GroupBox Header="设备">
-                    <ItemsControl ItemsSource="{Binding DeviceList}" VerticalAlignment="Center">
+                    <ItemsControl ItemsSource="{Binding DeviceColl}" VerticalAlignment="Center">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <UniformGrid Columns="4"></UniformGrid>

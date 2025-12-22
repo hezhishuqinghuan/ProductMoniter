@@ -76,6 +76,7 @@
     <Compile Include="Models\StuffOutWorkModel.cs" />
     <Compile Include="Models\WorkShopModel.cs" />
     <Compile Include="OpCommand\Command.cs" />
+    <Compile Include="Services\ModbusDataService.cs" />
     <Compile Include="UserControls\ModbusTest.xaml.cs">
       <DependentUpon>ModbusTest.xaml</DependentUpon>
     </Compile>
