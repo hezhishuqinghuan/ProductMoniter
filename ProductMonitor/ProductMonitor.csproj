@@ -69,6 +69,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Database\FactoryDbContext.cs" />
+    <Compile Include="Entities\AlarmLog.cs" />
+    <Compile Include="Entities\DeviceSnapshot.cs" />
     <Compile Include="Models\AlarmModel.cs" />
     <Compile Include="Models\DeviceModel.cs" />
     <Compile Include="Models\EnvironmentModel.cs" />
@@ -178,9 +180,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Resource Include="Resources\Images\head.jpg" />
+    <Resource Include="Resources\Images\Monitor.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Images\PdMonitor.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

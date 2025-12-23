@@ -37,7 +37,8 @@
                     <ColumnDefinition ></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <!--第一列-->
-                <Image Source="/Resources/Images/head.jpg" />
+                <Image Source="/Resources/Images/PdMonitor.png" />
+
                 <!--第二列-->
                 <StackPanel Grid.Column="1">
                     <TextBlock Text="生产监控平台" Foreground="White" FontSize="18" Margin="0,3,0,5"></TextBlock>
