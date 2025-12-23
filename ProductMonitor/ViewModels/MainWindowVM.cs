@@ -26,6 +26,8 @@ namespace ProductMonitor.ViewModels
 
         private CancellationTokenSource _modbusCts;
 
+      
+
         // 添加计数器（类字段）
         private int _snapshotCounter = 0;
         private const int SNAPSHOT_INTERVAL = 10; // 每10秒存一次
@@ -227,15 +229,15 @@ namespace ProductMonitor.ViewModels
                 _snapshotCounter = 0;
                 if (values.Count >= 7)
                 {
-                    FactoryDbContext.SaveDeviceSnapshot(
+                    Task.Run(() => FactoryDbContext.SaveDeviceSnapshotAsync(
                         values[0], // 总电能
                         values[1], // 电压
                         values[2], // 转速
                         values[3], // 气压
                         values[4], // 流量
                         values[5], // 频率
-                        values[6]  // 功率
-                    );
+                        values[6] // 功率
+                    ));
                 }
             }
 
@@ -273,7 +275,7 @@ namespace ProductMonitor.ViewModels
             });
 
             // 保存完整日志到数据库
-            FactoryDbContext.SaveAlarm(dbMsg, triggerTime, duration);
+            Task.Run(() => FactoryDbContext.SaveAlarmAsync(dbMsg, triggerTime, duration));
         }
         /// <summary>
         /// 监控用户控件

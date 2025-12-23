@@ -255,7 +255,8 @@
                 </Grid.RowDefinitions>
                 
                 <!--第一行-->
-                <Image Source="../Resources/Images/head.jpg"></Image>
+               <Image Source="/Resources/Images/Monitor.png" />
+
                 
                 <!--第二行-->
                 <Grid Grid.Row="1">
